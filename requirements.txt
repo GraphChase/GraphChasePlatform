@@ -1,0 +1,8 @@
+pandas
+pydantic
+tensorboardX
+open_spiel
+tensorflow-gpu==2.8.0
+gymnasium==0.29.1
+pygame
+matplotlib
