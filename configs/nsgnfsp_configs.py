@@ -2,6 +2,7 @@ import argparse
 
 def parse_args():
     argparser = argparse.ArgumentParser()
+    argparser.add_argument('--graph_id', type=int, default=0)
     argparser.add_argument('--save_path', type=str, default='./experiments/nsg_nfsp')
     argparser.add_argument('--save_folder', default=None)
     argparser.add_argument("--no_cuda", action="store_false", dest="use_cuda", 
@@ -31,7 +32,6 @@ def parse_args():
     argparser.add_argument('--attacker_mode', type=str, default='bandit')
     ############### Environment ##############
     # argparser.add_argument('--time_horizon', type=int, default=9)
-    argparser.add_argument('--graph_id', type=int, default=0)
     ############### Train and Eval ##############
     argparser.add_argument('--br_idx', type=int, default=0)
     argparser.add_argument('--max_episodes', type=int, default=int(5e6))
