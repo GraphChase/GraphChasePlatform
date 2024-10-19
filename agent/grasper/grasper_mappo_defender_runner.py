@@ -26,13 +26,24 @@ class GrasperDefenderRunner(object):
         self.ft_agent = finetune_policy
         self.args = args
         self.graph_emb_model = None
+        self.have_load_pretrain_model = False
         self.env = sample_env(args) if env is None else env
 
     def pre_pretrain(self, ):
-        # save_path = self.args.save_path
         save_path = os.path.join(self.args.save_path, f"data/pretrain_models/graph_learning")
         if not os.path.exists(save_path):
-            os.makedirs(save_path)        
+            os.makedirs(save_path)
+        # If pre-pretrain model already exists, skip the training phase
+        if self.args.load_graph_emb_model is None:
+            model_path = os.path.join(save_path, f"checkpoint_epoch{self.args.graph_pretrain_max_epoch}_type_{self.args.graph_type}_ep{self.args.edge_probability}_gp{self.args.pool_size}_layer{self.args.gnn_num_layer}_"
+                                        f"hidden{self.args.gnn_hidden_dim}_out{self.args.gnn_output_dim}_dnum{self.args.num_defender}_enum{self.args.num_exit}_"
+                                        f"mep{self.args.min_evader_pth_len}.pt")
+        else:
+            model_path = self.args.load_graph_emb_model
+        if os.path.exists(model_path):
+            print(f"Pre-Pretrain Model exists!")
+            self.load_pre_pretrain_model(self.env)
+            return 0
 
         def collate_fn(batch):
             graphs = [x for x in batch]
@@ -136,10 +147,13 @@ class GrasperDefenderRunner(object):
        
     def pretrain(self, evader_runner_cls:PathEvaderRunner):
 
-        save_path = os.path.join(self.args.save_path, f"data/pretrain_models/pretrain_agent")
-        writer = SummaryWriter(f"{save_path}/pretrain_loss")
-        # if not os.path.exists(save_path):
-        #     os.makedirs(save_path)         
+        save_path = os.path.join(self.args.save_path, f"data/pretrain_models/pretrain_loss")
+        writer = SummaryWriter(f"{save_path}")
+     
+        # Set pretrain model
+        # If default path aleady has pretrained model, skip the Pretrain phase
+        if self.load_pretrain_model():
+            return 0
 
         env_pool = self.load_env_pool()
         
@@ -147,11 +161,6 @@ class GrasperDefenderRunner(object):
         env = np.random.choice(env_pool)
         self.load_pre_pretrain_model(env)
 
-        # Set pretrain model
-        # if self.args.load_pretrain_model: 
-        #     print("Load hyper model {}/{}".format(self.args.actor_model, self.args.critic_model))
-        #     self.pretrain_agent.policy.actor.load_state_dict(torch.load(self.args.actor_model))
-        #     self.pretrain_agent.policy.critic.load_state_dict(torch.load(self.args.critic_model))    
 
         setup_str = f"End2End: {self.args.use_end_to_end}, Emb Layer: {self.args.use_emb_layer}, Augment: {self.args.use_augmentation}, Act Supervisor: {self.args.use_act_supervisor}"       
 
@@ -497,13 +506,7 @@ class GrasperDefenderRunner(object):
         self.load_pre_pretrain_model(self.env)
 
         # Set pretrain model
-        if self.args.load_pretrain_model: 
-            pretrain_model = set_pretrain_model_path(self.args, self.args.num_iterations)
-            actor_model = pretrain_model + '_actor.pt'
-            critic_model = pretrain_model + '_critic.pt'
-            print("Load hyper model {}/{}".format(actor_model, critic_model))
-            self.pretrain_agent.policy.actor.load_state_dict(torch.load(actor_model))
-            self.pretrain_agent.policy.critic.load_state_dict(torch.load(critic_model)) 
+        self.load_pretrain_model()
 
         # Initialize finetuning model parameters
         if self.args.use_end_to_end:
@@ -529,32 +532,60 @@ class GrasperDefenderRunner(object):
         if self.args.use_emb_layer and self.args.load_pretrain_model:
             self.load_emb_layer() 
 
-    def load_pretrain_net_checkpoint(self, pretrain_actor_path, pretrain_critic_path):
-        self.pretrain_agent.policy.actor.load_state_dict(torch.load(pretrain_actor_path))
-        self.pretrain_agent.policy.critic.load_state_dict(torch.load(pretrain_critic_path))
-
     def load_pre_pretrain_model(self, env):
         """
         self.graph_emb_model: Set pre_pretrain_model
         """
-        feat = env.graph.get_graph_info(self.args.node_feat_dim)
-        if self.args.use_end_to_end:
-            self.args.use_emb_layer = True
-            hg = get_dgl_graph(env)
-            hgs = [hg for _ in range(env.defender_num)]
-        else:
-            if self.args.load_graph_emb_model:
+        if self.graph_emb_model is None:
+            feat = env.graph.get_graph_info(self.args.node_feat_dim)
+            if self.args.use_end_to_end:
+                self.args.use_emb_layer = True
+                hg = get_dgl_graph(env)
+                hgs = [hg for _ in range(env.defender_num)]
+            else:
                 self.graph_emb_model = PreModel(feat.shape[1], self.args.gnn_hidden_dim, self.args.gnn_output_dim, self.args.gnn_num_layer, self.args.gnn_dropout)
                 self.graph_emb_model.to(self.args.device)            
-                pretrain_graph_model_file = f"data/pretrain_models/graph_learning/checkpoint_epoch{self.args.graph_pretrain_max_epoch}_type_{self.args.graph_type}_" \
-                                            f"ep{self.args.edge_probability}_gp{self.args.pool_size}_layer{self.args.gnn_num_layer}_" \
-                                            f"hidden{self.args.gnn_hidden_dim}_out{self.args.gnn_output_dim}_dnum{self.args.num_defender}_" \
-                                            f"enum{self.args.num_exit}_mep{self.args.min_evader_pth_len}.pt"
-                pretrain_graph_model_file = os.path.join(self.args.save_path, pretrain_graph_model_file)
-                self.graph_emb_model.load(torch.load(pretrain_graph_model_file))
-                print(f"Load pretrained graph model from {pretrain_graph_model_file}...")
+                if self.args.load_graph_emb_model is None:
+                    # If user does not specify the postion of pre-pretrained model, 
+                    # it find the default path that pre-pretraining phase save model's place
+                    pretrain_graph_model_file = f"data/pretrain_models/graph_learning/checkpoint_epoch{self.args.graph_pretrain_max_epoch}_type_{self.args.graph_type}_" \
+                                                f"ep{self.args.edge_probability}_gp{self.args.pool_size}_layer{self.args.gnn_num_layer}_" \
+                                                f"hidden{self.args.gnn_hidden_dim}_out{self.args.gnn_output_dim}_dnum{self.args.num_defender}_" \
+                                                f"enum{self.args.num_exit}_mep{self.args.min_evader_pth_len}.pt"
+                    pretrain_graph_model_file = os.path.join(self.args.save_path, pretrain_graph_model_file)
+                    self.graph_emb_model.load(torch.load(pretrain_graph_model_file))
+                    print(f"Load pre-pretrained graph model from {pretrain_graph_model_file}...")
+                else:
+                    self.graph_emb_model.load(torch.load(self.args.load_graph_emb_model))
+                    print(f"Load pre-pretrained graph model from {self.args.load_graph_emb_model}...")
+                assert self.graph_emb_model is not None, "graph_model is None, please load graph model file or run pre_pretrain"
+        else:
+            pass
+
+    def load_pretrain_model(self, ):
+        def load_pretrain_net_checkpoint(pretrain_actor_path, pretrain_critic_path):
+            self.pretrain_agent.policy.actor.load_state_dict(torch.load(pretrain_actor_path))
+            self.pretrain_agent.policy.critic.load_state_dict(torch.load(pretrain_critic_path)) 
+
+        if self.have_load_pretrain_model:
+            pass
+        else:
+            if self.args.pretrain_actor_model_path is None and self.args.pretrain_critic_model_path is None:
+                pretrain_model = set_pretrain_model_path(self.args, self.args.num_iterations)
+                actor_model = pretrain_model + '_actor.pt'
+                critic_model = pretrain_model + '_critic.pt'
+                if os.path.exists(actor_model) and os.path.exists(critic_model):
+                    print("Load hyper model {}/{}".format(actor_model, critic_model))
+                    load_pretrain_net_checkpoint(actor_model, critic_model)
+                    self.have_load_pretrain_model = True
+                    return True
+                else:
+                    return False
             else:
-                assert self.graph_emb_model is not None, "graph_model is None, please load graph model file or run pre_pretrain"        
+                print("Load hyper model {}/{}".format(self.args.pretrain_actor_model_path, self.args.pretrain_critic_model_path))
+                load_pretrain_net_checkpoint(self.args.pretrain_actor_model_path, self.args.pretrain_critic_model_path)
+                self.have_load_pretrain_model = True
+        return False
 
     def save(self, save_folder, prefix=None):
         os.makedirs(save_folder, exist_ok=True)

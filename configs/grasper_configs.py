@@ -4,6 +4,9 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_path', type=str, default='./experiments/grasper')
+    parser.add_argument('--running_mode', choices=['OnlyFinetuning', 'GenerateTrainingGraph', 'PrePretrain', 'Pretrain' ,'All'], 
+                        default='All',
+                        help='Type of attacker: all_path or exit_node')    
     parser.add_argument('--save_folder', default=None)
     parser.add_argument("--no_cuda", action="store_false", dest="use_cuda", 
                         help="Do not use CUDA even if available")
@@ -45,14 +48,16 @@ def parse_args():
     parser.add_argument("--graph_pretrain_max_epoch", type=int, default=200, help="Maximum epochs for graph pretraining")
 
     # Pretrain parameters
-    parser.add_argument('--load_graph_emb_model', action='store_true', help='whether load graph emb model')
-    parser.add_argument('--load_pretrain_model', action='store_true', help='whether load pretrained model')
+    parser.add_argument('--load_graph_emb_model', type=str, default=None, help='the path of pre-pretrained model, None means use default path')
     parser.add_argument('--batch_size', type=int, default=256, help='batch_size')
     parser.add_argument('--num_games', type=int, default=5, help='number of envs in a PPO/MAPPO pretrain iteration')
     parser.add_argument('--num_task', type=int, default=5, help='number of opponent policies of a given game')
-    parser.add_argument('--num_sample', type=int, default=10, help='number of plays of a given opponent policy')
-    parser.add_argument('--num_iterations', type=int, default=2000, help='number of PPO/MAPPO pretrain iterations')
+    parser.add_argument('--num_sample', type=int, default=40, help='number of plays of a given opponent policy')
+    parser.add_argument('--num_iterations', type=int, default=200000, help='number of PPO/MAPPO pretrain iterations')
     parser.add_argument('--use_act_supervisor', action='store_true', default=False, help='whether use HMP')
+    parser.add_argument('--act_sup_coef_min', type=float, default=0.01, help='min coef of action regularization')
+    parser.add_argument('--act_sup_coef_max', type=float, default=0.1, help='max coef of action regularization')
+    parser.add_argument('--act_sup_coef_decay', type=int, default=40000, help='number of episodes to decay action regularization')
     parser.add_argument('--use_emb_layer', action='store_true', default=False, help='whether use observation embedding layer')
     parser.add_argument('--use_augmentation', action='store_true', default=False, help='concat. game config embed with state')
     parser.add_argument('--no_end_to_end', action='store_true', dest="use_end_to_end", help='end-to-end training of whole network architecture')    
@@ -68,6 +73,10 @@ def parse_args():
     parser.add_argument('--checkpoint', type=int, default=0, help='checkpoint')
     parser.add_argument('--save_every', type=int, default=2000, help='save pretrain models every x iterations')
 
+    # Finetuning parameters
+    parser.add_argument('--load_pretrain_model', action='store_true', default=False, help='whether use observation embedding layer')
+    parser.add_argument('--pretrain_actor_model_path', type=str, default=None, help='the path of pretrained actor model, None means use default path')
+    parser.add_argument('--pretrain_critic_model_path', type=str, default=None, help='the path of pretrained critic model, None means use default path')
     # PSRO
     parser.add_argument('--eval_episodes', type=int, default=int(1e3),
                         help='Number of evaluation episodes')    
@@ -105,10 +114,7 @@ def get_mappo_config():
     parser.add_argument("--use_feature_normalization", action='store_true', default=False, help="Whether to apply layernorm to the inputs")
     parser.add_argument("--use_orthogonal", action='store_true', default=False, help="Whether to use Orthogonal initialization for weights and 0 initialization for biases")
     parser.add_argument("--gain", type=float, default=0.01, help="The gain # of last action layer")
-    
-    parser.add_argument('--act_sup_coef_min', type=float, default=0.01, help='min coef of action regularization')
-    parser.add_argument('--act_sup_coef_max', type=float, default=0.1, help='max coef of action regularization')
-    parser.add_argument('--act_sup_coef_decay', type=int, default=40000, help='number of episodes to decay action regularization')     
+ 
 
     # recurrent parameters
     parser.add_argument("--use_naive_recurrent_policy", action='store_true', default=False, help='Whether to use a naive recurrent policy')

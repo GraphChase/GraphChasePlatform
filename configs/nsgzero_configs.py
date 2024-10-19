@@ -26,7 +26,7 @@ def parse_args():
     parser.add_argument("--train_from", type=int, default=128, help="Start training after n episodes")
     parser.add_argument("--test_every", type=int, default=500, help="Test every n episodes")
     parser.add_argument("--test_nepisodes", type=int, default=30, help="Number of episodes for testing")
-    parser.add_argument("--save_every", type=int, default=1, help="Save model every n episodes")
+    parser.add_argument("--save_every", type=int, default=500, help="Save model every n episodes")
     parser.add_argument("--log_every", type=int, default=500, help="Log every n episodes")
 
     # MCTS parameters

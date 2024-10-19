@@ -2,6 +2,7 @@ import networkx as nx
 import numpy as np
 import random
 import torch
+import time
 
 class PathEvaderRunner(object):
     """

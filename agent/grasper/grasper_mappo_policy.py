@@ -526,9 +526,9 @@ class RHMAPPO:
         self.ppo_epoch = mappo_args.ppo_epoch
         self.value_loss_coef = mappo_args.value_loss_coef
         self.entropy_coef = mappo_args.entropy_coef
-        self.act_sup_coef_min = mappo_args.act_sup_coef_min
-        self.act_sup_coef_max = mappo_args.act_sup_coef_max
-        self.act_sup_coef_decay = mappo_args.act_sup_coef_decay
+        self.act_sup_coef_min = args.act_sup_coef_min
+        self.act_sup_coef_max = args.act_sup_coef_max
+        self.act_sup_coef_decay = args.act_sup_coef_decay
         self.act_sup_coef = self.act_sup_coef_max
         self.max_grad_norm = mappo_args.max_grad_norm
         self.huber_delta = mappo_args.huber_delta

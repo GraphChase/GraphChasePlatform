@@ -41,6 +41,8 @@ class GridGraph(BaseGraph):
         map_adjlist = nx.to_dict_of_lists(g)
         intra_nodes = [i for i in g.nodes() if len(map_adjlist[i]) == 4]
 
+        for node in g.nodes():
+            g.add_edge(node, node)
         to_remove = []
         for e in g.edges():
             if random.random() >= self.sides_exist_prob:
@@ -59,7 +61,6 @@ class GridGraph(BaseGraph):
         map_adjlist = nx.to_dict_of_lists(g)
         max_actions = 0
         for node in map_adjlist:
-            map_adjlist[node].append(node)
             map_adjlist[node].sort()
             if len(map_adjlist[node]) > max_actions:
                 max_actions = len(map_adjlist[node])
@@ -126,7 +127,16 @@ class GridGraph(BaseGraph):
             obs: [evader_pos, defender_pos, time, id] * defender_num
         """
         num_agent = obs.shape[0]
-        pths = [nx.shortest_path(self.graph, source=obs[i][i+1], target=evader_pos) for i in range(num_agent)]
+        # pths = [nx.shortest_path(self.graph, source=obs[i][i+1], target=evader_pos) for i in range(num_agent)]
+        pths = []
+        for i in range(num_agent):
+            source = obs[i][i + 1]
+            target = evader_pos
+            try:
+                path = nx.shortest_path(self.graph, source=source, target=target)
+            except nx.NetworkXNoPath:
+                path = [source]
+            pths.append(path)        
         act_probs = [np.zeros(5,) for _ in range(num_agent)]
         for i in range(num_agent):
             if len(pths[i]) == 1:   # stay
