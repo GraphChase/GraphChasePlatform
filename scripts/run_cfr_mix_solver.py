@@ -1,5 +1,6 @@
 import os
 import sys
+import torch
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
@@ -10,6 +11,9 @@ from graph.graph_files.custom_graph import CustomGraph
 from common_utils import directory_config, store_args
 
 args = parse_args()
+
+if torch.cuda.is_available() and args.use_cuda:
+    torch.cuda.set_device(args.device_id)
 
 graph = CustomGraph(args.graph_id)
 game_graph = CfrmixGraph(row=graph.row, column=graph.column, initial_locations=graph.initial_locations)

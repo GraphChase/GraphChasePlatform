@@ -6,6 +6,10 @@ def parse_args():
     parser.add_argument('--graph_id', type=int, default=int(0), 
                         help='use which graph')   
     parser.add_argument('--save_path', type=str, default='./experiments/cfr_mix')
+    parser.add_argument("--no_cuda", action="store_false", dest="use_cuda", 
+                        help="Do not use CUDA even if available")
+    parser.add_argument("--device_id", type=int, default=2, 
+                        help="use cuda id")     
     
     # Network and sample parameters
     parser.add_argument('--network_dim', type=int, default=32,
