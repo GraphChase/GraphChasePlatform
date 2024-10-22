@@ -586,6 +586,9 @@ class GrasperDefenderRunner(object):
                 load_pretrain_net_checkpoint(self.args.pretrain_actor_model_path, self.args.pretrain_critic_model_path)
                 self.have_load_pretrain_model = True
         return False
+    
+    def load_ft_model(self, save_folder, prefix=None):
+        self.ft_agent.policy.load(save_folder, prefix)
 
     def save(self, save_folder, prefix=None):
         os.makedirs(save_folder, exist_ok=True)

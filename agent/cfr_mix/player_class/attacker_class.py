@@ -60,10 +60,10 @@ class Attacker(object):
             self.regret_data_number = 0
             self.strategy_data_number = 0
         if torch.cuda.is_available():
-            self.regret_model = torch.nn.DataParallel(self.regret_model)
+            # self.regret_model = torch.nn.DataParallel(self.regret_model)
             self.regret_model = self.regret_model.cuda()
-            self.strategy_model = torch.nn.DataParallel(self.strategy_model)
-            self.strategy_model = self.strategy_model.cuda()
+            # self.strategy_model = torch.nn.DataParallel(self.strategy_model)
+            self.strategy_model = self.strategy_model.cuda()         
 
     def info_to_state(self, info):
         state = copy.deepcopy(info.key)
@@ -121,9 +121,10 @@ class Attacker(object):
             state = [x] * info.action_number
             action_list = np.array(info.available_actions).reshape((-1, 1))
             if torch.cuda.is_available():
-                state = torch.Tensor(state).cuda()
+                state = torch.from_numpy(np.array(state)).float().cuda()
                 action_list = torch.Tensor(action_list).cuda()
-                prediction = self.regret_model.module(state, action_list).cpu().squeeze(1).detach().numpy()
+                # prediction = self.regret_model.module(state, action_list).cpu().squeeze(1).detach().numpy()
+                prediction = self.regret_model(state, action_list).cpu().squeeze(1).detach().numpy()
             else:
                 state = torch.Tensor(state)
                 action_list = torch.Tensor(action_list)
@@ -136,9 +137,10 @@ class Attacker(object):
         state = [x] * info.action_number
         action_list = np.array(info.available_actions).reshape((-1, 1))
         if torch.cuda.is_available():
-            state = torch.Tensor(state).cuda()
+            state = torch.from_numpy(np.array(state)).float().cuda()
             action_list = torch.Tensor(action_list).cuda()
-            prediction = self.strategy_model.module(state, action_list).cpu().squeeze(1).detach().numpy()
+            # prediction = self.strategy_model.module(state, action_list).cpu().squeeze(1).detach().numpy()
+            prediction = self.strategy_model(state, action_list).cpu().squeeze(1).detach().numpy()
         else:
             state = torch.Tensor(state)
             action_list = torch.Tensor(action_list)

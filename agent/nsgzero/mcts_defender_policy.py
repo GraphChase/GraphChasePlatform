@@ -40,6 +40,8 @@ class policy_net(nn.Module):
             obs = torch.LongTensor(defender_position).to(self.args.device)
             obs=self.obsn_embedding(obs).flatten()
 
+            if len(attacker_his) > self.time_horizon + 1:
+                attacker_his = attacker_his[-(self.time_horizon + 1):]
             t=F.one_hot(torch.tensor(len(attacker_his)-1), num_classes=self.time_horizon+1).to(self.args.device).float()
             obs=torch.cat([obs,t])
             obs=self.obs_f1(obs)
@@ -104,7 +106,8 @@ class value_net(nn.Module):
             defender_position.append(attacker_position)
             obs = torch.LongTensor(defender_position).to(self.args.device)
             obs = self.obsn_embedding(obs).flatten()
-
+            if len(attacker_his) > self.time_horizon + 1:
+                attacker_his = attacker_his[-(self.time_horizon + 1):]
             t = F.one_hot(torch.tensor(len(attacker_his)-1),
                         num_classes=self.time_horizon+1).to(self.args.device).float()
             obs = torch.cat([obs, t])
@@ -116,7 +119,7 @@ class value_net(nn.Module):
     def batch_forward(self, def_pos, att_pos, time):
         batch_size=def_pos.shape[0]
         obs = torch.cat([def_pos, att_pos], dim=-1).long()
-        obs = self.obsn_embedding(obs).view(batch_size,-1)
+        obs = self.obsn_embedding(obs).view(batch_size,-1)        
         t = F.one_hot(time,
                       num_classes=self.time_horizon+1).float()
         obs = torch.cat([obs, t], dim=-1)
@@ -267,15 +270,19 @@ class MCTS:
         self._legal_action=self.game.get_legal_action
 
 class NsgzeroDefenderPolicy(object):
-    def __init__(self, game, args):
+    def __init__(self, game, args, train_game=None):
         super().__init__()
 
         self.game = game
         self.time_horizon = game.time_horizon
         self.args = args
         self.num_defender = game.defender_num
-        self.dy_net = dy_net(game, args)
-        self.pr_net = pr_net(game, args)
+        if train_game is not None:
+            self.dy_net = dy_net(train_game, args)
+            self.pr_net = pr_net(train_game, args)
+        else:
+            self.dy_net = dy_net(game, args)
+            self.pr_net = pr_net(game, args)            
         self.mcts = MCTS(self.game, self.dy_net, self.pr_net, self.args)
 
         self.buffer = []

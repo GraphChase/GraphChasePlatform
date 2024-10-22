@@ -62,9 +62,9 @@ class Defender(object):
             self.regret_data_number = 0
             self.strategy_data_number = 0
         if torch.cuda.is_available():
-            self.regret_model = torch.nn.DataParallel(self.regret_model)
+            # self.regret_model = torch.nn.DataParallel(self.regret_model)
             self.regret_model = self.regret_model.cuda()
-            self.strategy_model = torch.nn.DataParallel(self.strategy_model)
+            # self.strategy_model = torch.nn.DataParallel(self.strategy_model)
             self.strategy_model = self.strategy_model.cuda()
 
     def info_to_state(self, info):
@@ -140,7 +140,7 @@ class Defender(object):
             state = [state] * len(info.available_actions)
             action_list = info.available_actions
             if torch.cuda.is_available():
-                state = torch.tensor(state).cuda().float()
+                state = torch.from_numpy(np.array(state)).float().cuda()
                 action_list = torch.tensor(action_list).cuda().float()
                 prediction = self.regret_model(state, action_list).squeeze(1).cpu().detach().numpy()
             else:
@@ -155,7 +155,7 @@ class Defender(object):
         state = [state] * len(info.available_actions)
         action_list = info.available_actions
         if torch.cuda.is_available():
-            state = torch.tensor(state).cuda().float()
+            state = torch.from_numpy(np.array(state)).float().cuda()
             action_list = torch.tensor(action_list).cuda().float()
             prediction = self.strategy_model(state, action_list).cpu().detach().numpy()
         else:

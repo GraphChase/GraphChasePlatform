@@ -364,6 +364,16 @@ class RMAPPOPolicy:
         torch.save(self.actor.state_dict(), actor_path)
         torch.save(self.critic.state_dict(), critic_path)
 
+    def load(self, path, prefix=None):
+        actor_name = 'actor.pt'
+        critic_name = 'critic.pt'
+        if prefix is not None:
+            actor_name = f"{str(prefix)}_{actor_name}"
+            critic_name = f"{str(prefix)}_{critic_name}"
+        self.actor.load_state_dict(torch.load(f"{path}/{actor_name}", map_location=torch.device(self.device)))
+        self.critic.load_state_dict(torch.load(f"{path}/{critic_name}", map_location=torch.device(self.device))) 
+        print(f"Load fine-tuning model from {path}, checkpoint {prefix}")
+
 class RMAPPO:
     def __init__(self, env, mappo_args, args):
         self.env = env

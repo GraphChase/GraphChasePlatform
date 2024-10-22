@@ -84,9 +84,9 @@ class DefenderGroup(object):
             self.regret_data_number = 0
             self.strategy_data_number = 0
         if torch.cuda.is_available():
-            self.regret_model = torch.nn.DataParallel(self.regret_model)
+            # self.regret_model = torch.nn.DataParallel(self.regret_model)
             self.regret_model = self.regret_model.cuda()
-            self.strategy_model = torch.nn.DataParallel(self.strategy_model)
+            # self.strategy_model = torch.nn.DataParallel(self.strategy_model)
             self.strategy_model = self.strategy_model.cuda()
 
     def info_to_state(self, info):
@@ -172,10 +172,11 @@ class DefenderGroup(object):
                     ac.append([a])
 
             if torch.cuda.is_available():
-                state = torch.tensor(np.array(state)).cuda().float()
+                state = torch.from_numpy(np.array(state)).float().cuda()
                 obs = torch.tensor(np.array(o)).cuda().float()
                 action = torch.tensor(np.array(ac)).cuda().float()
-                prediction = self.regret_model.module.agent_model(state, obs, action).cpu().squeeze(1).detach().numpy()
+                # prediction = self.regret_model.module.agent_model(state, obs, action).cpu().squeeze(1).detach().numpy()
+                prediction = self.regret_model.agent_model(state, obs, action).cpu().squeeze(1).detach().numpy()
             else:
                 state = torch.tensor(np.array(state)).float()
                 obs = torch.tensor(np.array(o)).float()
@@ -194,10 +195,11 @@ class DefenderGroup(object):
                 ac.append([a])
 
         if torch.cuda.is_available():
-            state = torch.tensor(np.array(state)).cuda().float()
+            state = torch.from_numpy(np.array(state)).float().cuda()
             obs = torch.tensor(np.array(o)).cuda().float()
             action = torch.tensor(np.array(ac)).cuda().float()
-            prediction = self.strategy_model.module(state, obs, action).cpu().squeeze(1).detach().numpy()
+            # prediction = self.strategy_model.module(state, obs, action).cpu().squeeze(1).detach().numpy()
+            prediction = self.strategy_model(state, obs, action).cpu().squeeze(1).detach().numpy()
         else:
             state = torch.tensor(np.array(state)).float()
             obs = torch.tensor(np.array(o)).float()

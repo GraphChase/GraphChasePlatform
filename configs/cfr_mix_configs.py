@@ -18,7 +18,7 @@ def parse_args():
                         help='Number of samples')
     parser.add_argument('--action_number', type=int, default=1000,
                         help='Number of actions')
-    parser.add_argument('--train_epoch', type=int, default=200,
+    parser.add_argument('--train_epoch', type=int, default=500,
                         help='Number of training epochs')
 
     # Batch sizes
@@ -38,7 +38,7 @@ def parse_args():
                         help='Learning rate for defender strategy')
 
     # Iteration
-    parser.add_argument('--iteration', type=int, default=10000,
+    parser.add_argument('--iteration', type=int, default=1000,
                         help='Number of iterations')
 
     return parser.parse_args()

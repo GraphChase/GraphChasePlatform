@@ -177,7 +177,7 @@ class DefenderGroup(object):
                 ac.append([a])
 
             if torch.cuda.is_available():
-                state = torch.tensor(np.array(state)).cuda().float()
+                state = torch.from_numpy(np.array(state)).float().cuda()
                 obs = torch.tensor(np.array(obs)).cuda().float()
                 action = torch.tensor(np.array(ac)).cuda().float()
                 prediction = self.regret_model.agent_model[id](state, obs, action).squeeze(1).cpu().detach().numpy()
@@ -206,7 +206,7 @@ class DefenderGroup(object):
             ac.append([a])
 
         if torch.cuda.is_available():
-            state = torch.tensor(np.array(state)).cuda().float()
+            state = torch.from_numpy(np.array(state)).float().cuda()
             obs = torch.tensor(np.array(obs)).cuda().float()
             action = torch.tensor(np.array(ac)).cuda().float()
             prediction = self.strategy_model[player_id](state, obs, action).cpu().squeeze(1).detach().numpy()

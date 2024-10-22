@@ -157,7 +157,7 @@ class NsgzeroDefenderRunner(BaseRunner):
                 
                 last_save_e = train_episode
                 save_path = os.path.join(self.save_path, "models")
-                self.save_models(save_path)
+                self.save_models(save_path, train_episode)
                 print(f"Saving models to {save_path}")
 
             if (train_episode-last_log_e) / self.args.log_every >= 1.0:

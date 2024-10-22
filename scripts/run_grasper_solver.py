@@ -30,6 +30,12 @@ def main(args=None):
     graph = CustomGraph(args.graph_id)
     env = GridEnv(graph, render_mode="rgb_array")
 
+    evader_runner = PathEvaderRunner(env, args)
+    
+    pretrain_policy = RHMAPPO(env, mappo_args, args)
+    finetune_policy = RMAPPO(env, mappo_args, args)        
+    defender_runner = GrasperDefenderRunner(pretrain_policy, finetune_policy, args, env)
+
     if args.running_mode != 'OnlyFinetuning':
         # Step 1: Generate the graphs that have the same shape with your aiming graph
         # Save the training set to args.save_path/data/related_files/game_pool/(graph shape)/...pik
@@ -42,9 +48,6 @@ def main(args=None):
 
         # Step 2: According to the training set graph, pre pretrain graph model
         # Save the pre-pretrain model to args.save_path/data/pretrain_models/graph_learning/...pt
-        pretrain_policy = RHMAPPO(env, mappo_args, args)
-        finetune_policy = RMAPPO(env, mappo_args, args)        
-        defender_runner = GrasperDefenderRunner(pretrain_policy, finetune_policy, args, env)
         defender_runner.pre_pretrain()
         if args.running_mode == 'PrePretrain':
             print("Pre-Pretraining Phase Done.")
@@ -54,7 +57,6 @@ def main(args=None):
         # Step 3: Run pretrain phase
         # Random choose envs from env_pool, and train pretrain model which is used to generate fine-tuning models' parameters
         # Save the pretrain model to args.save_path/data/pretrain_models/grasper_mappo/...pt
-        evader_runner = PathEvaderRunner(env, args)
         defender_runner.pretrain(PathEvaderRunner)
         if args.running_mode == 'Pretrain':
             print("Pretraining Phase Done.")
