@@ -9,7 +9,8 @@ def parse_args():
     parser.add_argument("--no_cuda", action="store_false", dest="use_cuda", 
                         help="Do not use CUDA even if available")
     parser.add_argument("--device_id", type=int, default=2, 
-                        help="use cuda id")     
+                        help="use cuda id")
+    parser.add_argument("--seed", type=int, default=777)    
     
     # Network and sample parameters
     parser.add_argument('--network_dim', type=int, default=32,

@@ -11,6 +11,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from dgl.dataloading import GraphDataLoader
 from agent.grasper.graph_model import PreModel
 from agent.pretrain_psro.path_evader_runner import PathEvaderRunner
+import copy
 
 from tensorboardX import SummaryWriter
 import os
@@ -290,10 +291,13 @@ class GrasperDefenderRunner(object):
             demonstration_distribs = None
         
         while not terminated:
-            evader_act = evader_actions[episode_length]
+            evader_act = evader_path[episode_length+1] if self.env.nextstate_as_action else evader_actions[episode_length]
             
             values, actions, action_log_probs, env_actions = self.collect(pooled_node_embs, Ts, shared_obs, obs)
             # Add evader's action
+            if self.env.nextstate_as_action:
+                for i in range(1, len(observation)):
+                    env_actions[i-1] = observation[i] if env_actions[i-1] >= len(self.env.graph.change_state[0]) else self.env.graph.change_state[observation[i] - 1][env_actions[i-1]]
             env_actions = np.insert(env_actions, 0, evader_act) # shape: (defender_num +1, )
 
             observation, reward, terminated, truncated, info = self.env.step(env_actions)
@@ -339,9 +343,12 @@ class GrasperDefenderRunner(object):
             pooled_node_emb = None
 
         while not terminated:
-            evader_act = evader_actions[episode_length]
+            evader_act = evader_path[episode_length+1] if self.env.nextstate_as_action else evader_actions[episode_length]
             values, actions, action_log_probs, actions_env = self.collect_ft(shared_obs, obs, pooled_node_emb)
             # Add evader's action
+            if self.env.nextstate_as_action:
+                for i in range(1, len(observation)):
+                    actions_env[i-1] = observation[i] if actions_env[i-1] >= len(self.env.graph.change_state[0]) else self.env.graph.change_state[observation[i] - 1][actions_env[i-1]]            
             env_actions = np.insert(actions_env, 0, evader_act) # shape: (defender_num +1, )
 
             observation, reward, terminated, truncated, info = self.env.step(env_actions)
@@ -383,7 +390,7 @@ class GrasperDefenderRunner(object):
         values = value.detach().cpu().numpy()
         actions = action.detach().cpu().numpy()
         action_log_probs = action_log_prob.detach().cpu().numpy()
-        actions_env = np.reshape(actions, self.env.defender_num)
+        actions_env = copy.deepcopy(np.reshape(actions, self.env.defender_num))
         return values, actions, action_log_probs, actions_env
     
     @torch.no_grad()
@@ -400,7 +407,7 @@ class GrasperDefenderRunner(object):
         values = value.detach().cpu().numpy()
         actions = action.detach().cpu().numpy()
         action_log_probs = action_log_prob.detach().cpu().numpy()
-        actions_env = np.reshape(actions, self.args.num_defender)
+        actions_env = copy.deepcopy(np.reshape(actions, self.args.num_defender))
         return values, actions, action_log_probs, actions_env    
 
     @torch.no_grad()

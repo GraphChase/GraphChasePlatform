@@ -1,16 +1,23 @@
 import copy
 
 class CfrmixGraph(object):
-    def __init__(self, row, column, initial_locations: list[list[int], list[int], list[int]],):
-        self.column = column
-        self.row = row
-        self.total_node_number = column * row
-        self.adjacent = [[i] for i in range(1, self.total_node_number + 1)]
-        self.adjacent_not_i = [[] for _ in range(1, self.total_node_number + 1)]
+    def __init__(self, graph, initial_locations: list[list[int], list[int], list[int]], time_horizon):
+
+        if hasattr(graph, 'row'):
+            self.column = graph.column
+            self.row = graph.row
+        self.total_node_number = graph.num_nodes
+        # self.adjacent = [[i] for i in range(1, self.total_node_number + 1)]
+        # self.adjacent_not_i = [[] for _ in range(1, self.total_node_number + 1)]
+        self.adjacent = [graph.adjlist[k] for k in graph.adjlist.keys()]
+        self.adjacent_not_i = [[x for x in lst if x != (i+1)] 
+                               for i, lst in enumerate(self.adjacent)]
+
         self.exit_node = initial_locations[-1]
         self.initial_locations = initial_locations
         self.stack_node = []
-        self.build_graph()
+        self.time_horizon = time_horizon
+        # self.build_graph()
 
     # Build the graph according to some rules
     def build_graph(self):

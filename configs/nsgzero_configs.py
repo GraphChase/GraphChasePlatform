@@ -14,6 +14,7 @@ def parse_args():
     parser.add_argument("--no_save_model", action="store_false", dest="save_model",
                         help="Save the trained model")
     parser.add_argument('--save_path', type=str, default='./experiments/nsgzero')
+    parser.add_argument("--graph_type", type=str, choices=["GridGraph", "AnyGraph"], default="GridGraph", help="The type of graph structure")
 
     # Training parameters
     parser.add_argument("--max_episodes", type=int, default=100000, help="Maximum number of episodes")

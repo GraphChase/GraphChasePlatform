@@ -12,6 +12,7 @@ def parse_args():
                         help="use cuda id")
     parser.add_argument('--save_path', type=str, default='./experiments/pretrain_psro')
     parser.add_argument("--train_mode", type=str, choices=["OnlyPretrain", "PretrainPsro", "OnlyPsro"], default="PretrainPsro", help="Use which train mode")
+    parser.add_argument("--graph_type", type=str, choices=["GridGraph", "AnyGraph"], default="GridGraph", help="The type of graph structure")
     
     # Pretrain
     parser.add_argument('--defender_runner_type', type=str, default="ppo", help='ppo')
@@ -34,7 +35,7 @@ def parse_args():
     parser.add_argument("--node_information_normalize", type=bool, default=True, help="Whether to normalize node information")
     parser.add_argument("--information_similarity", type=str, default="cosine", help="Type of information similarity to use")
     parser.add_argument("--line_batch_size", type=int, default=32, help="Batch size for LINE")
-    parser.add_argument("--line_epochs", type=int, default=5, help="Number of epochs for LINE")
+    parser.add_argument("--line_epochs", type=int, default=200, help="Number of epochs for LINE")
     parser.add_argument("--line_order", type=str, choices=["first", "second", "all"], default="all", help="Order for LINE")
     
     # Evader

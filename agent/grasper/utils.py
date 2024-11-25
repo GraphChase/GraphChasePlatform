@@ -1,7 +1,9 @@
 import copy
 import numpy as np
 from graph.grid_graph import GridGraph
+from graph.any_graph import AnyGraph
 from env.grid_env import GridEnv
+from env.any_graph_env import AnyGraphEnv
 import random
 import time
 import torch.nn as nn
@@ -20,10 +22,16 @@ def sample_env(args, default_game=None, env_str_list=None):
 
             if env_str_list is None:
                 if sum(path_length > 0) > 0 and min(path_length[path_length > 0]) >= args.min_evader_pth_len:
-                    env = GridEnv(gen_graph, render_mode="rgb_array")
+                    if args.graph_type == 'Grid_Graph':
+                        env = GridEnv(gen_graph, render_mode="rgb_array")
+                    elif args.graph_type == 'SG_Graph':
+                        env = AnyGraphEnv(gen_graph, render_mode="rgb_array")
                     break
             else:
-                env = GridEnv(gen_graph, render_mode="rgb_array")
+                if args.graph_type == 'Grid_Graph':
+                    env = GridEnv(gen_graph, render_mode="rgb_array")
+                elif args.graph_type == 'SG_Graph':
+                    env = AnyGraphEnv(gen_graph, render_mode="rgb_array")
                 if sum(path_length > 0) > 0 and min(path_length[path_length > 0]) >= args.min_evader_pth_len and env.condition_to_str() not in env_str_list:
                     break
     return env
@@ -62,6 +70,16 @@ def generate_graph(args, compute_path=True):
         exit_node = sorted(exit_node)
         feasible_locations = [node for node in node_list if node not in exit_node]
         initial_locations = [feasible_locations[0], list(np.random.choice(list(feasible_locations[1:]), args.num_defender))]
+
+        graph = AnyGraph(initial_locations[1], [initial_locations[0]], exit_node, time_horizon, 
+                         f"/home/shuxin_zhuang/workspace/GraphChase/graph/graph_files/sg.gpickle",
+                         edge_probability)
+        
+        if compute_path:
+            return graph, graph.get_shortest_path(time_horizon)[1] # if args.attacker_type == 'exit_node' else graph.get_shortest_path(time_horizon)[0] 
+        else:
+            return graph        
+        
     elif graph_type == 'SF_Graph':
         random.seed(int(time.time()))
         np.random.seed(int(time.time()))

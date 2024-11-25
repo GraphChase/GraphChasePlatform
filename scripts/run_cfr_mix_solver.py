@@ -16,7 +16,7 @@ if torch.cuda.is_available() and args.use_cuda:
     torch.cuda.set_device(args.device_id)
 
 graph = CustomGraph(args.graph_id)
-game_graph = CfrmixGraph(row=graph.row, column=graph.column, initial_locations=graph.initial_locations)
+game_graph = CfrmixGraph(graph, initial_locations=graph.initial_locations, time_horizon=graph.time_horizon)
 agent_init_location = []
 agent_init_location = graph.attacker_init + [tuple(graph.defender_init)]
 

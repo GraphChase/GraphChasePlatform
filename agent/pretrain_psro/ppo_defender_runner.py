@@ -64,7 +64,11 @@ class PretrainPsroDefenderRunner(BaseRunner):
         for i in range(self.args.train_pursuer_number):
 
             # sample one opponent path according to strategy
-            evader_actions,_ = evader_policy_list[0].get_action(strategy)
+            if self.env.nextstate_as_action:
+                _, evader_actions = evader_policy_list[0].get_action(strategy) 
+                evader_actions = evader_actions[1:]
+            else:
+                evader_actions, _ = evader_policy_list[0].get_action(strategy)            
 
             # sample to collect data, rollout
             terminated = False
@@ -76,13 +80,17 @@ class PretrainPsroDefenderRunner(BaseRunner):
                 
                 defender_action, log_prob, obs_emb, action_idx = self.get_action(observation, t)
                 actions = np.array(defender_action) # (n,)
+
+                if self.env.nextstate_as_action:
+                    for i in range(1, len(observation)):
+                        actions[i-1] = self.env.graph.change_state[observation[i] - 1][defender_action[i-1]]                
+                
                 actions = np.insert(actions, 0, evader_act) # shape: (n+1, )
 
                 observation, reward, terminated, truncated, info = self.env.step(actions)
                 t += 1
 
-                self.policy.store_transition((obs_emb, action_idx, log_prob, reward[1]))
-                    
+                self.policy.store_transition((obs_emb, action_idx, log_prob, reward[1]))      
             self.policy.train(self.args.ppo_epochs)
 
     def pretrain(self, evader_runner: PathEvaderRunner):
@@ -129,7 +137,11 @@ class PretrainPsroDefenderRunner(BaseRunner):
 
         for _ in range(eval_episodes):
 
-            evader_actions, _ = evader.get_action(policy_dist)
+            if env.nextstate_as_action:
+                _, evader_actions = evader.get_action(policy_dist) 
+                evader_actions = evader_actions[1:]
+            else:
+                evader_actions, _ = evader.get_action(policy_dist)
 
             terminated = False
             observation, info = env.reset()
@@ -139,8 +151,14 @@ class PretrainPsroDefenderRunner(BaseRunner):
                 evader_act = evader_actions[t]
                 
                 defender_action, log_prob, obs_emb, action_idx = self.get_action(observation, t)
-                actions = np.array(defender_action) # (n,)
-                actions = np.insert(actions, 0, evader_act) # shape: (n+1, )
+                if env.nextstate_as_action:
+                    actions = np.array(defender_action) # (n,)
+                    for i in range(1, len(observation)):
+                        actions[i-1] = self.env.graph.change_state[observation[i] - 1][defender_action[i-1]]
+                    actions = np.insert(actions, 0, evader_act) # shape: (n+1, )
+                else:
+                    actions = np.array(defender_action) # (n,)
+                    actions = np.insert(actions, 0, evader_act) # shape: (n+1, )
 
                 observation, reward, terminated, truncated, info = env.step(actions)
                 t += 1

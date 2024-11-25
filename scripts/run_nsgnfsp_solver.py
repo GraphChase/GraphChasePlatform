@@ -6,7 +6,6 @@ sys.path.insert(0, project_root)
 
 from configs.nsgnfsp_configs import parse_args
 from common_utils import set_seeds
-from env.grid_env import GridEnv
 import agent.nsg_nfsp.nsgnfsp_model as model
 import agent.nsg_nfsp.nsgnfsp_defender_policy as policy
 from agent.nsg_nfsp.nsgnfsp_defender_policy import CreateDefender
@@ -25,7 +24,12 @@ def main(args=None):
     set_seeds(args.seed)
 
     graph = CustomGraph(args.graph_id)
-    env = GridEnv(graph, return_reward_mode='defender', return_legal_action=True, nextstate_as_action=True, render_mode="rgb_array")
+    if args.graph_type == 'GridGraph':
+        from env.grid_env import GridEnv
+        env = GridEnv(graph, return_reward_mode='defender', return_legal_action=True, nextstate_as_action=True, render_mode="rgb_array")
+    elif args.graph_type == 'AnyGraph':
+        from env.any_graph_env import AnyGraphEnv
+        env = AnyGraphEnv(graph, return_reward_mode='defender', return_legal_action=True, render_mode="rgb_array")    
 
     defender_policy = CreateDefender(graph, args)
     defender_runner = NsgNfspDefenderRunner(env, defender_policy, args)

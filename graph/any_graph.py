@@ -2,27 +2,24 @@ from graph.base_graph import BaseGraph
 import networkx as nx
 import random
 import numpy as np
+import pickle
 
-class GridGraph(BaseGraph):
+class AnyGraph(BaseGraph):
     def __init__(self, 
                  defender_position:list,
                  attacker_position:list,
                  exit_position:list,
-                 time_horizon:int,                 
-                 rows:int, 
-                 cols:int, 
-                 sides_exist_prob:float=1.0,
-                 diagonal_exist_prob:float=0.0):
+                 time_horizon:int,
+                 graph_file_path: str,
+                 edge_probability:float = 1.0,
+                ):
         super().__init__(defender_position, attacker_position, exit_position, time_horizon)
 
-        self.row = rows
-        self.column = cols
-        self.sides_exist_prob = sides_exist_prob
-        self.diagonal_exist_prob = diagonal_exist_prob
-        self.size = [self.row, self.column]
-
+        with open(graph_file_path, 'rb') as f:
+            self.graph = pickle.load(f)
+        self.edge_probability = edge_probability
         self.build_graph()
-        self.build_changestate_legal_action()         
+        self.build_changestate_legal_action() 
 
     def build_graph(self):
         """
@@ -36,32 +33,23 @@ class GridGraph(BaseGraph):
         - self.degree: calculates the maximum possible number of actions.
         """
 
-        g = nx.grid_2d_graph(self.row, self.column)
-        g = nx.convert_node_labels_to_integers(g, first_label=1)
+        # g = nx.grid_2d_graph(self.row, self.column)
+        # g = nx.convert_node_labels_to_integers(g, first_label=1)
+        if self.edge_probability < 1.0:
+            while True:
+                new_g = self.graph.copy()
+                for edge in list(self.graph.edges):
+                    rnd, deg_0, deg_1 = random.random(), self.graph.degree[edge[0]], self.graph.degree[edge[1]]
+                    if rnd > self.edge_probability and deg_0 > 3 and deg_1 > 3:
+                        new_g.remove_edge(*edge)
+                if nx.is_connected(new_g):
+                    break
+            self.graph = new_g.copy()        
 
-        map_adjlist = nx.to_dict_of_lists(g)
-        intra_nodes = [i for i in g.nodes() if len(map_adjlist[i]) == 4]
-
-        for node in g.nodes():
-            g.add_edge(node, node)
-        to_remove = []
-        for e in g.edges():
-            if random.random() >= self.sides_exist_prob:
-                to_remove.append(e)
-        g.remove_edges_from(to_remove)
-
-        def other_nodes(node, n=self.column):
-            return node-n-1, node-n+1, node+n-1, node+n+1
-        add_edges = []
-        for node in intra_nodes:
-            for other_node in other_nodes(node):
-                if random.random() <= self.diagonal_exist_prob:
-                    add_edges.append((node, other_node))
-        g.add_edges_from(add_edges)
-
-        map_adjlist = nx.to_dict_of_lists(g)
+        map_adjlist = nx.to_dict_of_lists(self.graph)
         max_actions = 0
         for node in map_adjlist:
+            map_adjlist[node].append(node)
             map_adjlist[node].sort()
             if len(map_adjlist[node]) > max_actions:
                 max_actions = len(map_adjlist[node])
@@ -70,30 +58,43 @@ class GridGraph(BaseGraph):
         self.adjlist = map_adjlist        
         self.max_actions = pow(max_actions, self.num_defender)
         self.degree=max_actions
-        self.graph = g
+        for node in self.graph.nodes():
+            self.graph.add_edge(node, node)        
 
     def build_changestate_legal_action(self):
         self.change_state = [[i for _ in range(self.degree)] for i in range(1, self.num_nodes + 1)]
         self.legal_action = [[0] for _ in range(1, self.num_nodes + 1)]        
-        for node in range(1, self.num_nodes+1):              
-            state = [node] * 5
-            neighbors = self.adjlist.get(node, [])
-            for neighbor in neighbors:
-                if neighbor == node:
-                    state[0] = neighbor
-                elif neighbor == node - self.column:
-                    state[1] = neighbor
-                elif neighbor == node + self.column:
-                    state[2] = neighbor
-                elif neighbor == node - 1:
-                    state[3] = neighbor
-                elif neighbor == node + 1:
-                    state[4] = neighbor
-            self.change_state[node-1] = state
+        for node in range(1, self.num_nodes+1):  
+            for i in self.adjlist.keys():
+                adjlist = self.adjlist[i]
+                self.change_state[i - 1][:len(adjlist)] = adjlist
+                self.legal_action[i - 1][:len(adjlist)] = range(0, len(adjlist))
 
-            for j, a in enumerate(self.change_state[node-1]):
-                if a != node:
-                    self.legal_action[node-1].append(j)
+    def get_shortest_path(self, length) -> tuple[list, dict]:
+        """
+        Caculate the valid evader path in the custom graph
+
+        Parameters:
+        - length: (lenght + 1) is the max length of the evader path
+        """
+        path = []
+        path_list = {}
+        for j in range(len(self.exits)):
+            path_temp = []
+            if nx.has_path(self.graph, source=self.attacker_init[0], target=self.exits[j]):
+
+                shortest_path = nx.all_shortest_paths(self.graph, source=self.attacker_init[0], target=self.exits[j])
+
+                for p in shortest_path:
+                    if len(p) > length + 1 or len(path_temp) >= 200:
+                        break
+                    else:
+                        if list(set(p) & set(self.exits)) == [self.exits[j]]:
+                            path_temp.append(p)
+
+            path_list[self.exits[j]] = path_temp
+            path += path_temp
+        return path, path_list
     
     # return adjacent matrix and node information of each node
     def get_graph_info(self, node_feat_dim, return_adj=False, normalize_adj=True):

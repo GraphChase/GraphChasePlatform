@@ -15,7 +15,7 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=777)
     parser.add_argument('--base_rl', type=str, default='grasper_mappo', help='mappo, grasper_mappo')
     parser.add_argument('--graph_id', type=int, default=int(0), 
-                        help='use which graph')    
+                        help='use which graph')
 
     # Evader
     parser.add_argument('--attacker_type', choices=['all_path', 'exit_node'], default='exit_node',

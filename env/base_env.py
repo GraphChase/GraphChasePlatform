@@ -57,8 +57,6 @@ class BaseGame(gym.Env):
         self._exit_locations = deepcopy(np.array(self._initial_location[2]))
 
 
-
-
 # class NSGGridGraphGame(GridGraphGame):
 #     def __init__(self, graph, time_horizon, render_mode=None, nextstate_as_action=False):
 #         super().__init__(graph, time_horizon, render_mode, nextstate_as_action)

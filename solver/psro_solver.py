@@ -32,9 +32,14 @@ class PSRO(object):
 
         for _ in range(self.args.eval_episodes):
 
-            evader_actions, _ = evader.get_action()
+            if self.env.nextstate_as_action:
+                _, evader_actions = evader.get_action() 
+                evader_actions = evader_actions[1:]
+            else:
+                evader_actions, _ = evader.get_action()
 
             terminated = False
+            stime = time.time()
             observation, info = self.env.reset()
             t = 0
 
@@ -42,7 +47,11 @@ class PSRO(object):
                 evader_act = evader_actions[t]
                 with torch.no_grad():
                     env_actions = defender.get_env_actions(observation, t)
-                    actions = np.array(env_actions)
+                actions = np.array(env_actions)
+
+                if self.env.nextstate_as_action:
+                    for i in range(1, len(observation)):
+                        actions[i-1] = self.env.graph.change_state[observation[i] - 1][actions[i-1]]               
 
                 actions = np.insert(actions, 0, evader_act)
                 observation, reward, terminated, truncated, info = self.env.step(actions)

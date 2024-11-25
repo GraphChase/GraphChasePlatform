@@ -503,11 +503,11 @@ class RHMAPPO:
         if args.graph_type == 'Grid_Graph':
             args.node_num = args.row_max_for_state_emb * args.column_max_for_state_emb  # enable varied grid size
         else:
-            args.node_num = env.graph.get_graph_info().shape[0]
+            args.node_num = env.graph.get_graph_info(self.args.node_feat_dim).shape[0]
         args.defender_num = env.defender_num
         action_list = []
         for _ in range(env.defender_num):
-            action_list.append([i for i in range(5)])
+            action_list.append([i for i in range(env.graph.degree)])
         defender_action_map = list(itertools.product(*action_list))
         args.action_dim = len(defender_action_map)         
 
@@ -519,8 +519,8 @@ class RHMAPPO:
             self.buffer = SharedReplayBufferEnd2End(self.mappo_args, self.args, self.env.share_obs_dim, self.env.obs_dim, self.env.action_dim, self.env.defender_num)
         else:
             hyper_input_dim = args.gnn_output_dim + args.max_time_horizon_for_state_emb
-            self.policy = RHMAPPOPolicy(self.mappo_args, self.args, obs_size, share_obs_size, hyper_input_dim, len(self.env._action_to_direction))
-            self.buffer = SharedReplayBuffer(self.mappo_args, self.args, share_obs_size, obs_dim, len(self.env._action_to_direction), self.env.defender_num)        
+            self.policy = RHMAPPOPolicy(self.mappo_args, self.args, obs_size, share_obs_size, hyper_input_dim, self.env.graph.degree)
+            self.buffer = SharedReplayBuffer(self.mappo_args, self.args, share_obs_size, obs_dim, self.env.graph.degree, self.env.defender_num)        
         
         self.clip_param = mappo_args.clip_param
         self.ppo_epoch = mappo_args.ppo_epoch

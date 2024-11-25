@@ -69,7 +69,7 @@ class PPOAgent(object):
 
         action_list = []
         for _ in range(env.defender_num):
-            action_list.append([i for i in range(5)])
+            action_list.append([i for i in range(env.graph.degree)])
         self.defender_action_map = list(product(*action_list))
         action_dim  = len(self.defender_action_map)        
 

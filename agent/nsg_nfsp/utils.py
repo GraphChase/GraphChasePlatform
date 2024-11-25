@@ -45,7 +45,7 @@ def evaluate(environment, Defender, Attacker, br_idx, nb_episodes=100, all_resul
         for ep in range(nb_episodes):
             current_return = evaluate_episode(
                 environment, Defender, Attacker, br_idx)
-            total_return.append(current_return)
+            total_return.append(max(current_return, 0.))
         total_return = np.array(total_return)
         avg_return = np.mean(total_return)
         std_return = np.std(total_return)

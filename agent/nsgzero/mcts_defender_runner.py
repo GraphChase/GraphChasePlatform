@@ -124,7 +124,6 @@ class NsgzeroDefenderRunner(BaseRunner):
         last_log_e = 0
 
         for train_episode in range(0, self.args.max_episodes):
-
             defender_trajectory, evader_data = self.train_execute_episode(evader_runner)
             self.policy.add_trajectory(defender_trajectory)
 
@@ -140,7 +139,7 @@ class NsgzeroDefenderRunner(BaseRunner):
                 last_train_e = train_episode
 
             if (train_episode-last_test_e) / self.args.test_every >= 1.0:
-                stime = time.time()
+                # stime = time.time()
                 print(f"episodes: {train_episode} / {self.args.max_episodes}")
                 last_test_e = train_episode
 
@@ -151,7 +150,7 @@ class NsgzeroDefenderRunner(BaseRunner):
                     test_performance += test_reward
 
                 print(f"Episode: {train_episode}, BR Defender return : {test_performance / self.args.test_nepisodes}")
-                print(time.time()-stime)
+                # print(time.time()-stime)
 
             if self.args.save_model and (train_episode-last_save_e) / self.args.save_every >= 1.0:
                 
@@ -180,8 +179,8 @@ class NsgzeroDefenderRunner(BaseRunner):
         pr_net_name = 'pr_net.pt'
         dy_net_name = 'dy_net.pt'
         if prefix:
-            pr_net_name = f"{str(prefix)} + '_{pr_net_name}'"
-            dy_net_name = f"{str(prefix)} + '_{dy_net_name}'"
+            pr_net_name = f"{str(prefix)}_{pr_net_name}"
+            dy_net_name = f"{str(prefix)}_{dy_net_name}"
         torch.save(self.policy.pr_net.state_dict(), os.path.join(save_folder, pr_net_name))
         torch.save(self.policy.dy_net.state_dict(), os.path.join(save_folder, dy_net_name))
 

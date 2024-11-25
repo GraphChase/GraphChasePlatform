@@ -2,6 +2,6 @@ test.py
 .vscode/*
 experiments/*
 running_log/*
-log_grasper_5_5_5.txt
+log_grasper_*
 evaluate_*
 log*

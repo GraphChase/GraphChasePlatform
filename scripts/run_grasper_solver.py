@@ -15,7 +15,6 @@ from agent.pretrain_psro.path_evader_runner import PathEvaderRunner
 from solver.psro_solver import PSRO
 from common_utils import directory_config, store_args
 from graph.graph_files.custom_graph import CustomGraph
-from env.grid_env import GridEnv
 
 def main(args=None):
     if args is None:
@@ -28,7 +27,12 @@ def main(args=None):
 
     # Get the graph and env that you want to fine-tuning
     graph = CustomGraph(args.graph_id)
-    env = GridEnv(graph, render_mode="rgb_array")
+    if args.graph_type == 'Grid_Graph':
+        from env.grid_env import GridEnv
+        env = GridEnv(graph, render_mode="rgb_array")
+    elif args.graph_type == 'SG_Graph':
+        from env.any_graph_env import AnyGraphEnv
+        env = AnyGraphEnv(graph, render_mode="rgb_array")
 
     evader_runner = PathEvaderRunner(env, args)
     
@@ -39,7 +43,8 @@ def main(args=None):
     if args.running_mode != 'OnlyFinetuning':
         # Step 1: Generate the graphs that have the same shape with your aiming graph
         # Save the training set to args.save_path/data/related_files/game_pool/(graph shape)/...pik
-        args.row = env._rows; args.column = env._colums
+        if hasattr(env, '_rows'):
+            args.row = env._rows; args.column = env._colums
         get_training_set(args)
         if args.running_mode == 'GenerateTrainingGraph':
             print("Generating Training Graph Done.")

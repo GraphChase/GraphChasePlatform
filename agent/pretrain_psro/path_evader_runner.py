@@ -18,7 +18,7 @@ class PathEvaderRunner(object):
 
         self.env = env
         self.graph = env.nx_graph
-        self.colums = env._colums
+        self.colums = env._colums if hasattr(env, '_colums') else None
         self.evader_position = env._initial_location[0] # list
         self.exit_nodes = env._initial_location[2] # list
         self.max_timesteps = env.time_horizon
@@ -108,14 +108,18 @@ class PathEvaderRunner(object):
     
     def _trajectory2actions(self, path: list) -> list:
 
-        directions_to_actions = {0: 0, -self.colums:1, self.colums:2, -1:3, 1:4}
+        if self.colums:
+            # Used for gird graph
+            directions_to_actions = {0: 0, -self.colums:1, self.colums:2, -1:3, 1:4}
 
-        acts = []
-        for idx in range(1, len(path), 1):
-            cur_act = path[idx] - path[idx-1]
-            acts.append(directions_to_actions[cur_act])
+            acts = []
+            for idx in range(1, len(path), 1):
+                cur_act = path[idx] - path[idx-1]
+                acts.append(directions_to_actions[cur_act])
 
-        return acts      
+            return acts
+        else:
+            return None
     
     def train(self, defender_policy_list, meta_probability, sample_number) -> list:
         """ 
@@ -141,8 +145,8 @@ class PathEvaderRunner(object):
                     # available_action = [i for i in range(len(self.path_selections[exit_node]))]
                     # idx = np.random.choice(available_action)
                     # evader_path = self.path_selections[exit_node][idx]
-                    
-                evader_actions = self._trajectory2actions(evader_path)
+                
+                evader_actions = evader_path[1:] if self.env.nextstate_as_action else self._trajectory2actions(evader_path)
 
                 # rollout
                 terminated = False
@@ -153,7 +157,11 @@ class PathEvaderRunner(object):
                     evader_act = evader_actions[t]
                     with torch.no_grad():
                         defender_action = defender_policy.get_env_actions(observation, t)
-                        actions = np.array(defender_action)
+                    actions = np.array(defender_action) # (n,)
+
+                    if self.env.nextstate_as_action:
+                        for i in range(1, len(observation)):
+                            actions[i-1] = self.env.graph.change_state[observation[i] - 1][defender_action[i-1]]
 
                     actions = np.insert(actions, 0, evader_act)
                     observation, reward, terminated, truncated, info = self.env.step(actions)
@@ -162,7 +170,7 @@ class PathEvaderRunner(object):
                     if terminated or truncated:
                         path_reward += reward[0]
                         if reward[0] == -1:
-                            defender_reward += 1
+                            defender_reward += 1                           
 
             defender_rds_vs_each_path.append(defender_reward/sample_number)
             path_reward /= sample_number

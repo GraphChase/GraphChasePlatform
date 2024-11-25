@@ -90,9 +90,9 @@ class DefenderGroup(object):
             self.strategy_model = self.strategy_model.cuda()
 
     def info_to_state(self, info):
-        info_embedding_1 = copy.deepcopy(info.key[0])
+        info_embedding_1 = copy.deepcopy(info.key[0])[-self.time_horizon:]
         info_embedding_1 = np.pad(info_embedding_1, (0, self.time_horizon - len(info_embedding_1)))
-        info_embedding_2 = copy.deepcopy(info.key[1])
+        info_embedding_2 = copy.deepcopy(info.key[1])[-self.time_horizon:]
         info_embedding_2 = np.array(info_embedding_2).reshape(len(info_embedding_2[0]) * len(info_embedding_2))
         info_embedding = np.concatenate((info_embedding_1, info_embedding_2), axis=0)
         state = np.pad(info_embedding, (0, self.input_dim - len(info_embedding)))
@@ -195,6 +195,7 @@ class DefenderGroup(object):
                 ac.append([a])
 
         if torch.cuda.is_available():
+            self.strategy_model = self.strategy_model.cuda()
             state = torch.from_numpy(np.array(state)).float().cuda()
             obs = torch.tensor(np.array(o)).cuda().float()
             action = torch.tensor(np.array(ac)).cuda().float()

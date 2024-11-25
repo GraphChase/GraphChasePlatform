@@ -385,9 +385,9 @@ class RMAPPO:
         share_obs_size = self.env.defender_num + self.env.evader_num + 1 # position and timestep
         obs_size = share_obs_size + 1 # position, timestep and id
 
-        self.buffer = SharedReplayBufferFT(self.mappo_args, self.args, share_obs_size, obs_dim, len(self.env._action_to_direction), self.env.defender_num)
+        self.buffer = SharedReplayBufferFT(self.mappo_args, self.args, share_obs_size, obs_dim, self.env.graph.degree, self.env.defender_num)
 
-        self.policy = RMAPPOPolicy(self.mappo_args, self.args, obs_size, share_obs_size, len(self.env._action_to_direction))
+        self.policy = RMAPPOPolicy(self.mappo_args, self.args, obs_size, share_obs_size, self.env.graph.degree)
         self.clip_param = mappo_args.clip_param
         self.ppo_epoch = mappo_args.ppo_epoch
         self.value_loss_coef = mappo_args.value_loss_coef

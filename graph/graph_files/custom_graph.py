@@ -1,4 +1,5 @@
 from graph.grid_graph import GridGraph
+from graph.any_graph import AnyGraph
 
 def CustomGraph(graph_id, time_horizon=None):
     if graph_id == 0:
@@ -40,6 +41,35 @@ def CustomGraph(graph_id, time_horizon=None):
         attacker_init = [13]
         exits = [3, 11, 21, 25]
 
-        graph = GridGraph(defender_init, attacker_init, exits, time_horizon, row, column)              
+        graph = GridGraph(defender_init, attacker_init, exits, time_horizon, row, column)
 
+    elif graph_id == 4:
+        sg_map_path = f"/home/shuxin_zhuang/workspace/GraphChase/graph/graph_files/sg.gpickle"
+        defender_init = [120, 60, 8, 11]
+        attacker_init = [340]
+        exits = [10,201,200,213,290,320,157,159,115,50]
+        if time_horizon is None:
+            time_horizon = 15
+
+        graph = AnyGraph(defender_init, attacker_init, exits, time_horizon, sg_map_path)
+
+    elif graph_id == 5:
+        column = 15; row = 15
+        if time_horizon is None:
+            time_horizon = 15
+        defender_init = [53, 117, 173, 109]
+        attacker_init = [113]
+        exits = [61,151,217,223,180,75,12,6,225,31]
+
+        graph = GridGraph(defender_init, attacker_init, exits, time_horizon, row, column)
+
+    elif graph_id == 6:
+        manhattan_map_path = f"/home/shuxin_zhuang/workspace/GraphChase/graph/graph_files/manhattan.gpickle"
+        defender_init = [66, 408, 124,185, 328, 467]
+        attacker_init = [48]
+        exits = [27, 72, 111, 138, 309, 239, 244, 551, 429, 356]
+        if time_horizon is None:
+            time_horizon = 30
+        graph = AnyGraph(defender_init, attacker_init, exits, time_horizon, manhattan_map_path)
+     
     return graph

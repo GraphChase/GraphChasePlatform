@@ -12,6 +12,7 @@ import numpy as np
 from env.grid_env import GridEnv
 from graph.graph_files.custom_graph import CustomGraph
 from agent.pretrain_psro.path_evader_runner import PathEvaderRunner
+from agent.cfr_mix.evaluation.mix_deep_worst_case_utility import mixed_traverse_tree
 
 def calculate_worst_case_utility(env, 
                           defender_runner_list: list, 
@@ -20,6 +21,7 @@ def calculate_worst_case_utility(env,
                           next_state_as_action,
                           meta_probability=None, 
                           sample_number=500,
+                          custom_horizon=None
                           ) -> list:
     """ 
     Evaluate every path by simulation sample_number times and update self.q_table
@@ -44,57 +46,64 @@ def calculate_worst_case_utility(env,
                     evader_actions = evader_runner._trajectory2actions(evader_path)
                 else:
                     evader_actions = evader_path
-                
-                # rollout
-                terminated = False
-                s_t = time.time()
-                observation, info = env.reset()
-                t = 0
 
-                while not terminated:
-                    evader_act = evader_actions[t+1] if next_state_as_action else evader_actions[t]
+                if alg == 'cfrmix':                  
+                    agent_init_location = []
+                    agent_init_location = env.initial_locations[0] + [tuple(env.initial_locations[1])]
+                    if custom_horizon is not None:
+                        defender_reward += mixed_traverse_tree(env, defender_runner, agent_init_location, evader_actions, custom_horizon)
 
-                    if alg == 'nsgnfsp':
-                        with torch.no_grad():
-                            defender_obs = [copy.deepcopy(info["evader_history"]), 
-                                            copy.deepcopy(tuple(info["defender_history"][-1]))]
-                            
-                            def_current_legal_action = list(product(*info["defender_legal_actions"]))
+                else:
+                    # rollout
+                    terminated = False
+                    s_t = time.time()
+                    observation, info = env.reset()
+                    t = 0
 
-                            defender_a = defender_runner.policy.select_action(
-                                [defender_obs], [def_current_legal_action], is_evaluation=True)
+                    while not terminated:
+                        evader_act = evader_actions[t+1] if next_state_as_action else evader_actions[t]
 
-                            actions = np.insert(np.array(defender_a[0]), 0, evader_act)
+                        if alg == 'nsgnfsp':
+                            with torch.no_grad():
+                                defender_obs = [copy.deepcopy(info["evader_history"]), 
+                                                copy.deepcopy(tuple(info["defender_history"][-1]))]
+                                
+                                def_current_legal_action = list(product(*info["defender_legal_actions"]))
 
-                    elif alg == "nsgzero":
-                        with torch.no_grad():                         
-                            defender_obs = (info["evader_history"], info["defender_history"][-1])
-                            # defender action
-                            defender_act, _ = defender_runner.policy.train_select_act(
-                                defender_obs, info["defender_legal_actions"], prior=False)
-                            
-                            actions = np.array((evader_act,) + defender_act, dtype=int)
-                    
-                    elif alg == "pretrainpsro" or alg == 'grasper':
-                        with torch.no_grad():
-                            defender_action = defender_runner.get_env_actions(observation, t)
-                            actions = np.array(defender_action)
-                            actions = np.insert(actions, 0, evader_act)
+                                defender_a = defender_runner.policy.select_action(
+                                    [defender_obs], [def_current_legal_action], is_evaluation=True)
 
-                    observation, reward, terminated, truncated, info = env.step(actions)
-                    t += 1
+                                actions = np.insert(np.array(defender_a[0]), 0, evader_act)
 
-                    if terminated or truncated:
-                        if alg == 'nsgnfsp' or alg == 'nsgzero':
-                            reward = max(reward, 0.)
-                            defender_reward += reward
-                        elif alg == 'pretrainpsro' or alg == 'grasper':
-                            reward = max(reward[1], 0.)
-                            defender_reward += reward                        
-                        else:
-                            print("To be done")
-                            sys.exit(1)
-                        s_t = time.time()
+                        elif alg == "nsgzero":
+                            with torch.no_grad():                         
+                                defender_obs = (info["evader_history"], info["defender_history"][-1])
+                                # defender action
+                                defender_act, _ = defender_runner.policy.train_select_act(
+                                    defender_obs, info["defender_legal_actions"], prior=False)
+                                
+                                actions = np.array((evader_act,) + defender_act, dtype=int)
+                        
+                        elif alg == "pretrainpsro" or alg == 'grasper':
+                            with torch.no_grad():
+                                defender_action = defender_runner.get_env_actions(observation, t)
+                                actions = np.array(defender_action)
+                                actions = np.insert(actions, 0, evader_act)
+
+                        observation, reward, terminated, truncated, info = env.step(actions)
+                        t += 1
+
+                        if terminated or truncated:
+                            if alg == 'nsgnfsp' or alg == 'nsgzero':
+                                reward = max(reward, 0.)
+                                defender_reward += reward
+                            elif alg == 'pretrainpsro' or alg == 'grasper':
+                                reward = max(reward[1], 0.)
+                                defender_reward += reward                        
+                            else:
+                                print("To be done")
+                                sys.exit(1)
+                            s_t = time.time()
 
             if defender_reward/sample_number < tmp_res:
                 tmp_res = defender_reward/sample_number
@@ -126,6 +135,10 @@ def main():
         mappo_args = parser.parse_known_args(sys.argv[1:])[0]
     elif evaluate_alg == 'cfrmix':
         from configs.cfr_mix_configs import parse_args
+        args = parse_args()    
+
+        if torch.cuda.is_available() and args.use_cuda:
+            torch.cuda.set_device(args.device_id)        
     else:
         print(f"The tested algorithm has not been implemented in the evaluate code")
         sys.exit(1)
@@ -142,7 +155,13 @@ def main():
         env = GridEnv(graph, return_reward_mode='defender', return_legal_action=True, nextstate_as_action=True, render_mode="rgb_array")
     elif evaluate_alg == 'pretrainpsro' or evaluate_alg == 'grasper':
         graph = CustomGraph(args.graph_id)
-        env = GridEnv(graph, render_mode="rgb_array")    
+        env = GridEnv(graph, render_mode="rgb_array")
+    elif evaluate_alg == 'cfrmix':
+        from graph.cfr_graph_wrapper import CfrmixGraph
+        
+        graph = CustomGraph(args.graph_id)
+        game_graph = CfrmixGraph(row=graph.row, column=graph.column, initial_locations=graph.initial_locations, time_horizon=graph.time_horizon)
+        env = GridEnv(graph, render_mode="rgb_array")
 
     # Custom evader path
     args.attacker_type = 'exit_node'
@@ -183,7 +202,6 @@ def main():
         calculate_worst_case_utility(env, [defender_runner], evader_runner, evaluate_alg, next_state_as_action=True)
     
         print(f"Calculate worst case utility Done!")
-
     elif evaluate_alg == 'pretrainpsro':
         from agent.pretrain_psro.node_embedding import NodeEmbedding
         from agent.pretrain_psro.ppo_defender_runner import PretrainPsroDefenderRunner
@@ -214,7 +232,6 @@ def main():
         calculate_worst_case_utility(env, defender_runner_list, evader_runner, evaluate_alg, next_state_as_action=False, meta_probability=meta_strategy)
 
         print(f"Calculate worst case utility Done!")
-
     elif evaluate_alg == 'grasper':
         from agent.grasper.grasper_mappo_policy import RHMAPPO
         from agent.grasper.mappo_policy import RMAPPO
@@ -245,9 +262,32 @@ def main():
         calculate_worst_case_utility(env, defender_runner_list, evader_runner, evaluate_alg, next_state_as_action=False, meta_probability=meta_strategy)
 
         print(f"Calculate worst case utility Done!")
-
     elif evaluate_alg == 'cfrmix':
-        pass
+        from agent.cfr_mix.player_class.deep_team_class import DefenderGroup
+
+        defender_runner = DefenderGroup(time_horizon=env.time_horizon, player_number=env.defender_num, hidden_dim=args.network_dim)
+
+        # Set defender policy
+        pattern = r'5DeepMCFR4_mix_probe_cfr_defender_strategy_model_(\d+)\.dat'
+        max_number = -1
+        latest_model = None
+        for filename in os.listdir(model_path):
+            match = re.match(pattern, filename)
+            if match:
+                number = int(match.group(1))
+                if number > max_number:
+                    max_number = number
+                    latest_model = filename    
+        model_path = os.path.join(model_path, latest_model)    
+        defender_runner.strategy_model = torch.load(model_path)
+
+        calculate_worst_case_utility(game_graph, [defender_runner], evader_runner, evaluate_alg, next_state_as_action=True, custom_horizon=custom_horizon)
+
+        # path_set = graph.get_path(history[0], time_horizon, False)
+        # print('path', len(path_set))
+        # utility = np.zeros(len(path_set))
+
+        # return min(utility), utility               
 
 if __name__ == "__main__":
     main()

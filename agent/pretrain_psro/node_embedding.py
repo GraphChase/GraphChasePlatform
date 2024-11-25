@@ -26,8 +26,6 @@ class NodeEmbedding(object):
 
         self.save_path = os.path.join(args.save_path, "node_embedding_file")
 
-        self.get_env_changestate_legal_action()
-
     def _assign_node_information(self,):
         
         # process node information
@@ -45,7 +43,7 @@ class NodeEmbedding(object):
             for i in range(self.total_node_number):
                 if self.args.node_information_type == "min":
                     short_length_list = []
-                    for idx, j in enumerate(self.change_state[i]):
+                    for idx, j in enumerate(self.Graph.change_state[i]):
                         short_length_list.append(min(short_length[j - 1]))
                 else:
                     short_length_list = short_length[i]
@@ -77,37 +75,7 @@ class NodeEmbedding(object):
                         self.information_proximity_matrix[i, j] = normalized_information[j] * self.total_node_number
             self._save_information_proximity_matrix()
 
-        return self.information_proximity_matrix
-    
-    def get_env_changestate_legal_action(self,):
-        """
-        Accroding to the BaseGraph, get self.change_state and self.legal_action
-        """
-
-        self.change_state = [[i, i, i, i, i] for i in range(1, self.total_node_number + 1)]
-        self.legal_action = [[0] for _ in range(1, self.total_node_number + 1)]        
-        for node in range(1, self.total_node_number+1):  
-            state = [node] * 5
-
-            neighbors = self.Graph.adjlist.get(node, [])
-
-            for neighbor in neighbors:
-                if neighbor == node:
-                    state[0] = neighbor
-                elif neighbor == node - self.Graph.column:
-                    state[1] = neighbor
-                elif neighbor == node + self.Graph.column:
-                    state[2] = neighbor
-                elif neighbor == node - 1:
-                    state[3] = neighbor
-                elif neighbor == node + 1:
-                    state[4] = neighbor
-            
-            self.change_state[node-1] = state
-
-            for j, a in enumerate(self.change_state[node-1]):
-                if a != node:
-                    self.legal_action[node-1].append(j)      
+        return self.information_proximity_matrix            
 
     def train_embedding(self,) -> dict: 
         """
@@ -132,7 +100,7 @@ class NodeEmbedding(object):
             if self.args.node_information_type == "all":
                 self.node_information = [[0 for _ in range(len(self.exit_node))] for _ in range(self.total_node_number)]
             else:
-                self.node_information = [[0 for _ in range(len(self.change_state[0]))] for _ in range(self.total_node_number)]
+                self.node_information = [[0 for _ in range(len(self.Graph.change_state[0]))] for _ in range(self.total_node_number)]
             print("assign node information......")
             self.information_proximity_matrix = self._assign_node_information()
             print("train model embedding model......")      
