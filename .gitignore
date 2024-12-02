@@ -3,5 +3,5 @@ test.py
 experiments/*
 running_log/*
 log_grasper_*
-evaluate_*
+evaluate_l*
 log*

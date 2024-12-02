@@ -14,9 +14,6 @@ class AttackerBandit(object):
         self.actions = []
         self.values = []
         self._next_entry_index = 0
-        self.num_actions = len(exits)
-        self.N_a = dict.fromkeys(list(range(self.num_actions)), 1)
-        self.estimates = dict.fromkeys(list(range(self.num_actions)), 0)
         self.exits = exits
         self.init_loc = init_loc
         self.time_horizon = time_horizon
@@ -31,6 +28,12 @@ class AttackerBandit(object):
         for e in self.exits:
             self.paths[e] = list(nx.all_simple_paths(
                 self.graph, source=self.init_loc[0], target=e, cutoff=time_horizon))
+        
+        self.paths = {k: v for k, v in self.paths.items() if v}  # v为空列表时会被过滤掉
+        self.exits = [int(key) for key in self.paths.keys()]
+        self.num_actions = len(self.exits)
+        self.N_a = dict.fromkeys(list(range(self.num_actions)), 1)
+        self.estimates = dict.fromkeys(list(range(self.num_actions)), 0)
 
     def select_action(self, observation=None, legal_actions=None, is_evaluation=True, epsilon=0.1):
         action = self.path[self.t]

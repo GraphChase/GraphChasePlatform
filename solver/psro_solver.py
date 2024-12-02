@@ -33,7 +33,7 @@ class PSRO(object):
         for _ in range(self.args.eval_episodes):
 
             if self.env.nextstate_as_action:
-                _, evader_actions = evader.get_action() 
+                _, evader_actions = evader.get_action()
                 evader_actions = evader_actions[1:]
             else:
                 evader_actions, _ = evader.get_action()

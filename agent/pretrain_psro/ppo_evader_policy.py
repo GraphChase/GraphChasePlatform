@@ -54,23 +54,9 @@ class PPOAgent(object):
         self.clip_param = self.args.clip_param
 
         self.rollout_buffer = []
-
-        node_emb_size = self.args.emb_size * 2 if self.args.line_order == "all" else self.args.emb_size
-        if self.args.use_past_history:
-            state_dim = env.time_horizon + env.evader_num + env.defender_num
-        else:
-            state_dim = 1 + env.defender_num
-
-        if self.args.use_node_embedding:
-            state_dim *= node_emb_size
-
-        if not self.args.use_past_history:
-            state_dim += 1
-
-        action_list = []
-        for _ in range(env.defender_num):
-            action_list.append([i for i in range(env.graph.degree)])
-        self.defender_action_map = list(product(*action_list))
+        state_dim = 1 + env.defender_num
+        action_list = [i for i in range(env.graph.degree)]
+        self.defender_action_map = action_list
         action_dim  = len(self.defender_action_map)
 
         self.actor = DiscreteActor(state_dim, action_dim, self.args.ppo_hidden_size).to(self.device)

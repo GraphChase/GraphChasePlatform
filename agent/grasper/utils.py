@@ -64,15 +64,19 @@ def generate_graph(args, compute_path=True):
             return graph
         
     elif graph_type == 'SG_Graph':
-        max_node_num = 372
+        # max_node_num = 372
+        max_node_num = 620
         node_list = list(np.arange(max_node_num) + 1)
         exit_node = list(np.random.choice(node_list, args.num_exit, replace=False))
         exit_node = sorted(exit_node)
         feasible_locations = [node for node in node_list if node not in exit_node]
         initial_locations = [feasible_locations[0], list(np.random.choice(list(feasible_locations[1:]), args.num_defender))]
 
+        # graph = AnyGraph(initial_locations[1], [initial_locations[0]], exit_node, time_horizon, 
+        #                  f"/home/shuxin_zhuang/workspace/GraphChase/graph/graph_files/sg.gpickle",
+        #                  edge_probability)
         graph = AnyGraph(initial_locations[1], [initial_locations[0]], exit_node, time_horizon, 
-                         f"/home/shuxin_zhuang/workspace/GraphChase/graph/graph_files/sg.gpickle",
+                         f"/home/shuxin_zhuang/workspace/GraphChase/graph/graph_files/manhattan.gpickle",
                          edge_probability)
         
         if compute_path:

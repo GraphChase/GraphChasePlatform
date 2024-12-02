@@ -51,3 +51,56 @@ Here's an example of how to set up and run the NSGZero algorithm:
     ```
 
 The running process for other algorithms follows the same procedure as mentioned above.
+
+## Evaluation Methods
+
+### Overview
+
+We provide three methods to evaluate the pursuer strategy:
+
+1. Worst Case Utility Testing
+2. Strategy Robustness Testing
+3. Exploitability Testing
+
+### 1. Worst Case Utility Testing
+
+This method evaluates the pursuer strategy's performance in worst-case scenarios. The implementation is already available in the current training code.
+
+### 2. Strategy Robustness Testing
+
+This method tests the pursuer strategy's ability to handle different evader strategies by adjusting the maximum time horizon. A longer time horizon allows the evader more path choices, enabling comprehensive testing of the pursuer strategy against various evader behaviors.
+
+#### Usage
+
+```bash
+# For NSG-Zero model
+python evaluate_worst_case_utility.py nsgzero custom_horizon model_path
+
+# For NSG-NFSP model  
+python evaluate_worst_case_utility.py nsgnfsp custom_horizon model_path
+
+# For Pretrain-PSRO model
+python evaluate_worst_case_utility.py pretrainpsro custom_horizon model_path --load_node_embedding_model embedding_model_path
+```
+
+### 3. Exploitability Testing
+This method assesses the pursuer strategy's vulnerability to exploitation by training an evader strategy using reinforcement learning while keeping the pursuer strategy fixed.
+
+#### Usage
+
+```bash
+# For NSG-Zero model
+python evaluate_exploit.py nsgzero custom_horizon model_path
+
+# For NSG-NFSP model
+python evaluate_exploit.py nsgnfsp custom_horizon model_path
+
+# For Pretrain-PSRO model
+python evaluate_exploit.py pretrainpsro custom_horizon model_path --load_node_embedding_model embedding_model_path
+```
+
+### Parameters
+
+- custom_horizon: The maximum time horizon for the evaluation
+- model_path: Path to the trained pursuer strategy model
+- embedding_model_path: Path to the node embedding model (required for Pretrain-PSRO only)

@@ -68,10 +68,6 @@ class PathEvaderRunner(object):
         elif self.attacker_type == 'exit_node':        
             exit_node = self.exit_nodes[path_idx]
             single_path = random.choice(self.path_selections[exit_node])
-            
-            # available_action = [i for i in range(len(self.path_selections[exit_node]))]
-            # idx = np.random.choice(available_action)
-            # single_path = self.path_selections[exit_node][idx]
 
         return self._trajectory2actions(single_path), single_path
 

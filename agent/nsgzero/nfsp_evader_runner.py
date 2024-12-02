@@ -24,6 +24,8 @@ class NFSPAttacker:
         for e in self.exits:
             self.paths[e] = list(nx.all_simple_paths(self.nx_graph,
                                                      self.attacker_init[0], e, cutoff=self.time_horizon))
+        self.paths = {k: v for k, v in self.paths.items() if v}  # v为空列表时会被过滤掉
+        self.exits = [int(key) for key in self.paths.keys()]
 
         self.ban_capacity=args.ban_capacity # bandit capacity
         self._next_idx=0

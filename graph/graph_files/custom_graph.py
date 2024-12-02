@@ -65,11 +65,12 @@ def CustomGraph(graph_id, time_horizon=None):
 
     elif graph_id == 6:
         manhattan_map_path = f"/home/shuxin_zhuang/workspace/GraphChase/graph/graph_files/manhattan.gpickle"
-        defender_init = [66, 408, 124,185, 328, 467]
-        attacker_init = [48]
+        # defender_init = [66, 408, 124, 185, 328, 467]
+        defender_init = [328, 467]
+        attacker_init = [421]
         exits = [27, 72, 111, 138, 309, 239, 244, 551, 429, 356]
         if time_horizon is None:
-            time_horizon = 30
+            time_horizon = 15
         graph = AnyGraph(defender_init, attacker_init, exits, time_horizon, manhattan_map_path)
      
     return graph
