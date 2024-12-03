@@ -5,3 +5,4 @@ running_log/*
 log_grasper_*
 evaluate_l*
 log*
+evaluate_nashconv*
