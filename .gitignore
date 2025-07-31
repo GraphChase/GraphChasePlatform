@@ -6,3 +6,4 @@ log_grasper_*
 evaluate_l*
 log*
 evaluate_nashconv_*
+__pycache__/
