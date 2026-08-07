@@ -1,0 +1,71 @@
+graph_arguments:
+  graph_gpickle_path: graphchase/graph/custom_graph/7_7_grid_graph.gpickle
+  attacker_init:
+    - 25
+  defender_init:
+    - 9
+    - 28
+    - 45
+    - 46
+  exit_nodes:
+    - 4
+    - 22
+    - 43
+    - 49
+  time_horizon: 4
+  graph_metadata: {}
+
+graph_embedding_arguments:
+  graph_embeddings: true
+  load_embeddings: graphchase/graph/custom_graph/graph_embeddings/7_7_grid_graph_4_22_43_49/node_embeddings.pkl
+  save_dir: graphchase/graph/custom_graph/graph_embeddings
+  emb_size: 16
+  node_information_type: all
+  no_normalize_info: false
+  similarity: cosine
+  line_order: all
+  epochs: 200
+  batch_size: 32
+  neg_samples: 5
+  lr: 0.025
+  load_node_information: null
+  load_information_proximity: null
+
+base_arguments:
+  seed: 77
+  use_cuda: true
+  device_id: 0
+  save_path: ./experiments/pretrain_psro/7_7_grid_p5_T4
+  use_wandb: false
+  wandb_project: graphchase
+
+psro_arguments:
+  num_psro_iteration: 20
+  rollouts_per_attacker_action: 10000
+  train_defender_batches: 630
+  episodes_per_batch: 8
+  vec_envs: 16
+  eval_episodes: 1000
+
+pretraining_arguments:
+  pretrain_iterations: 40
+  pretrain_tasks: 30
+  pretrain_episodes_per_task: 20
+  load_pretrained_model: false
+  pretrain_model_path: null
+
+ppo_hyperparameters:
+  ppo_actor_lr: 0.001
+  ppo_critic_lr: 0.003
+  ppo_gamma: 0.99
+  ppo_lambda: 0.95
+  ppo_clip: 0.2
+  ppo_epochs: 10
+  ppo_batch_size: 32
+  ppo_hidden_dim: 128
+  entropy_coef: 0.01
+
+attacker_settings:
+  action_type: exit_node
+  strategy_type: mix
+  reward_mode: win_rate

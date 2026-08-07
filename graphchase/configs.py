@@ -1,0 +1,71 @@
+from __future__ import annotations
+
+import argparse
+
+
+def build_gnn_pretrain_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="GNN graph pretraining configuration")
+    parser.add_argument("--time_horizon", type=int, default=6, help="time horizon of the game")
+    parser.add_argument("--use_mix", action="store_false", default=True, help="True for MAPPO, False for PPO")
+    parser.add_argument("--state_emb_dim", type=int, default=16, help="state embedding dims")
+    parser.add_argument("--batch_size", type=int, default=256, help="batch_size")
+    parser.add_argument("--node_feat_dim", type=int, default=3, help="feature dims of a node")
+    parser.add_argument("--gnn_hidden_dim", type=int, default=128, help="hidden dim of GNN")
+    parser.add_argument("--gnn_output_dim", type=int, default=32, help="output dim of GNN")
+    parser.add_argument("--gnn_num_layer", type=int, default=2, help="number of GNN layers")
+    parser.add_argument("--gnn_dropout", type=float, default=0.5, help="dropout rate of GNN")
+    parser.add_argument("--hidden_size", type=int, default=128, help="hidden dim of policy or value network")
+    parser.add_argument("--save_info", action="store_true", default=False, help="save graph information")
+    parser.add_argument("--seed", type=int, default=101, help="random seed")
+    parser.add_argument("--device", type=int, default=0, help="gpu id")
+
+    # Game Pool and Graph Generation Settings
+    parser.add_argument("--load_game_pool_file", action="store_true", help="use on-disk game pool")
+    parser.add_argument("--graph_gpickle_path", type=str, default=None, help="optional gpickle path for map or custom graphs")
+    parser.add_argument("--graph_type", type=str, default="Grid_Graph", help="Grid_Graph, Map_Graph, SY_Graph, SF_Graph, SW_Graph, ER_Graph")
+    parser.add_argument("--edge_probability", type=float, default=0.8, help="edge probability")
+    parser.add_argument("--differ_size", action="store_true", default=False, help="use varying grid sizes")
+    parser.add_argument("--row", type=int, default=10, help="row for grid graph")
+    parser.add_argument("--row_min", type=int, default=9, help="min row for grid graph")
+    parser.add_argument("--row_max", type=int, default=12, help="max row for grid graph")
+    parser.add_argument("--column", type=int, default=10, help="column for grid graph")
+    parser.add_argument("--column_min", type=int, default=9, help="min column for grid graph")
+    parser.add_argument("--column_max", type=int, default=12, help="max column for grid graph")
+    parser.add_argument("--sf_sw_node_num", type=int, default=300, help="node number for SF/SW/ER graphs")
+    parser.add_argument("--seed_to_generate_graph", type=int, default=100, help="seed for graph generation")
+    parser.add_argument("--small_world_k", type=int, default=10, help="k for small-world graph")
+    parser.add_argument("--min_num_defender", type=int, default=5, help="min number of defenders")
+    parser.add_argument("--max_num_defender", type=int, default=5, help="max number of defenders")
+    parser.add_argument("--min_num_exit", type=int, default=8, help="min number of exit nodes")
+    parser.add_argument("--max_num_exit", type=int, default=8, help="max number of exit nodes")
+    parser.add_argument("--min_time_horizon", type=int, default=6, help="min time horizon")
+    parser.add_argument("--max_time_horizon", type=int, default=10, help="max time horizon")
+    parser.add_argument("--action_type", type=str, default="exit_node", help="exit_node, all_path")
+    parser.add_argument("--min_attacker_pth_len", type=int, default=6, help="min attacker path length")
+    parser.add_argument("--pool_size", type=int, default=20000, help="game pool size")
+    parser.add_argument("--game_pool_dir", type=str, default="graphchase/graph/grasper_game_pool", help="game pool directory")
+
+    parser.add_argument("--prob_of_obs_attacker", type=float, default=1.0, help="probability of observing attacker")
+    parser.add_argument("--h_init", type=str, default="unif", help="kaim, unif, xavi")
+    parser.add_argument("--row_max_for_state_emb", type=int, default=20, help="row max for state embedding")
+    parser.add_argument("--column_max_for_state_emb", type=int, default=20, help="column max for state embedding")
+    parser.add_argument("--max_time_horizon_for_state_emb", type=int, default=20, help="max time horizon for state embedding")
+    parser.add_argument("--base_rl", type=str, default="grasper_mappo", help="ppo, mappo, grasper_ppo, grasper_mappo")
+    parser.add_argument("--num_iterations", type=int, default=20000000, help="number of pretrain iterations")
+    parser.add_argument("--save_every", type=int, default=2000000, help="save pretrain models every x iterations")
+    parser.add_argument("--num_games", type=int, default=5, help="number of envs per pretrain iteration")
+    parser.add_argument("--num_task", type=int, default=5, help="number of opponent policies per game")
+    parser.add_argument("--num_sample", type=int, default=10, help="number of plays per opponent policy")
+    parser.add_argument("--train_num_per_ite", type=int, default=1, help="number of train steps per iteration")
+    parser.add_argument("--update_every_n_episodes", type=int, default=-1, help="update frequency in episodes")
+    parser.add_argument("--checkpoint", type=int, default=0, help="checkpoint index")
+    parser.add_argument("--use_augmentation", action="store_true", default=False, help="use data augmentation")
+    parser.add_argument("--perfect_info", action="store_false", default=True, help="use perfect information")
+    parser.add_argument("--load_pretrain_model", action="store_true", default=False, help="load pretrain model")
+    parser.add_argument("--max_epoch", type=int, default=2000, help="max epoch for GNN pretrain")
+    return parser
+
+
+def parse_gnn_pretrain_args() -> argparse.Namespace:
+    parser = build_gnn_pretrain_parser()
+    return parser.parse_args()

@@ -1,0 +1,45 @@
+graph_type: Grid_Graph
+graph_gpickle_path: graphchase/graph/custom_graph/singapore.gpickle
+attacker_init:
+  - 45
+defender_init:
+  - 8
+  - 49
+  - 100
+exit_nodes:
+  - 96
+  - 105
+  - 129
+time_horizon: 12
+attacker_path_type: shortest
+edge_probability: 0.8
+min_attacker_pth_len: 5
+load_game_pool_file: true
+pool_size: 1000
+max_epoch: 200
+num_iterations: 20000
+save_every: 100000
+load_graph_emb_model: true
+use_node_emb: true
+seed: 77
+pre_pretrain_save_path: "graphchase/results/grasper/pre_pretrain/sg/"
+# graph_emb_model_path: "graphchase/results/grasper/pre_pretrain/grid_graph/checkpoint_epoch200_type_Grid_Graph_ep0.8_layer2_hidden128_out32_dnum4_4_enum4_5_mep5.pt"
+graph_emb_model_path: null
+pretrain_save_path: "graphchase/results/grasper/pretrain"
+# pretrain_model_iteration: 4000
+pretrain_model_iteration: null
+row: 7
+column: 7
+save_every: 1000
+min_num_defender: 4
+max_num_defender: 4
+min_num_exit: 4
+max_num_exit: 5
+
+train_defender_batches: 1200
+episodes_per_batch: 32
+ppo_epoch: 5
+use_act_supervisor: true
+use_gae: false
+minibatch_size: 64
+reward_mode: "win_rate"

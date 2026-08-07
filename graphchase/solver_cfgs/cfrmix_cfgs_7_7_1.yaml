@@ -1,0 +1,38 @@
+graph_gpickle_path: graphchase/graph/custom_graph/7_7_grid_graph.gpickle
+attacker_init:
+  - 25
+defender_init:
+  - 4
+  - 22
+  - 28
+  - 46
+exit_nodes:
+  - 1
+  - 7
+  - 43
+  - 49
+time_horizon: 7
+graph_metadata: {}
+
+seed: 77
+use_cuda: true
+device_id: 0
+save_path: graphchase/results/cfrmix
+run_id: run_0
+
+network_dim: 32
+sample_number: 20
+action_number: 1000
+train_epoch: 1000
+attacker_regret_batch_size: 32
+defender_regret_batch_size: 512
+defender_strategy_batch_size: 32
+attacker_regret_lr: 0.0015
+defender_regret_lr: 0.0015
+defender_strategy_lr: 0.0015
+iteration: 10000
+
+regret_file_names:
+  - cfrmix_regret_attacker.dat
+  - cfrmix_regret_defender.dat
+strategy_file_name: cfrmix_defender_strategy_{:d}.dat

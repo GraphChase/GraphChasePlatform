@@ -1,0 +1,52 @@
+graph_gpickle_path: graphchase/graph/custom_graph/mumbai.gpickle
+attacker_init:
+  - 29
+defender_init:
+  - 3
+  - 17
+  - 52
+  - 68
+exit_nodes:
+  - 14
+  - 16
+  - 22
+  - 64
+time_horizon: 8
+graph_metadata: {}
+
+seed: 0
+use_cuda: true
+device_id: 0
+save_path: graphchase/results/nsgnfsp
+save_folder: null
+
+embedding_size: 32
+hidden_size: 64
+relevant_v_size: 64
+if_naivedrrn: false
+br_buffer_capacity: 500000
+avg_buffer_capacity: 10000000
+br_lr: 0.0001
+avg_lr: 0.0001
+d_expl: 0.0
+a_expl: 0.1
+br_prob: 0.1
+seq_mode: cnn
+pre_embedding_path: null
+br_warmup_path: null
+defender_rl_mode: drrn
+defender_sl_mode: drrn
+attacker_mode: bandit
+reward_mode: win_rate
+
+br_idx: 0
+max_episodes: 500000
+train_br_freq: 4
+train_avg_freq: 32
+check_freq: 100000
+check_from: 100000
+display_freq: 10000
+min_to_train: 1000
+br_batch_size: 128
+avg_batch_size: 256
+exact_br: false

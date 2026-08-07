@@ -1,0 +1,49 @@
+graph_gpickle_path: graphchase/graph/custom_graph/singapore.gpickle
+attacker_init:
+  - 45
+defender_init:
+  - 8
+  - 49
+  - 100
+exit_nodes:
+  - 96
+  - 105
+  - 129
+time_horizon: 12
+graph_metadata: {}
+
+seed: 77
+use_cuda: true
+device_id: 0
+save_path: graphchase/results/nsgzero
+run_id: run_0
+use_tensorboard: false
+save_model: true
+
+num_workers: 4
+debug_single_process: false
+max_episodes: 50000
+embedding_dim: 16
+hidden_dim: 256
+batch_size: 128
+buffer_size: 50000
+lr: 0.0005
+
+train_every: 16
+train_from: 128
+test_every: 250
+test_nepisodes: 50
+save_every: 500
+log_every: 500
+
+num_sims: 100
+bias: 0.5
+cpuct: 0.3
+temp: 0.5
+gamma: 1.0
+reward_mode: win_rate
+
+att_type: nfsp
+ban_capacity: 500
+cache_capacity: 20
+br_rate: 0.2
